@@ -35,6 +35,8 @@ type T2 = MyPartial<{
     piyo: number;
   };
 }>;
+
+//  3-3
 // -----------------------------------------------
 
 interface EventPayloads {

@@ -66,6 +66,7 @@ addEventListener("event3", () => {}, {
 //   excess: true,
 // });
 
+//  2-4
 // -----------------------------------------------
 
 function giveId<T>(obj: T): T & { id: string } {
