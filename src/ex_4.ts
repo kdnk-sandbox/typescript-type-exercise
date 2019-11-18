@@ -100,9 +100,87 @@ ed.emit("end", {});
 
 //  4-4
 // -----------------------------------------------
+// 使用例
+type PartiallyPartial<T, K extends keyof T> = Partial<Pick<T, K>> &
+  Pick<T, Exclude<keyof T, K>>;
 
+// 元のデータ
 interface Data {
   foo: number;
   bar: string;
   baz: string;
 }
+/*
+ * T1は { foo?: number; bar?: string; baz: string } 型
+ */
+type T1 = PartiallyPartial<Data, "foo" | "bar">;
+
+//  4-5
+// -----------------------------------------------
+
+// PartiallyPartial<"foo" | "bar"> | PartiallyPartial<"bar" | "baz"> | PartiallyPartial<"bar" | "foo">
+
+type Speread<T, K extends keyof T> = K extends keyof T
+  ? PartiallyPartial<T, Exclude<keyof T, K>>
+  : never;
+
+type AtLeastOne<T> = Speread<T, keyof T>;
+
+// 使用例
+interface Options {
+  foo: number;
+  bar: string;
+  baz: boolean;
+}
+
+function test(options: AtLeastOne<Options>) {
+  const { foo, bar, baz } = options;
+  // 省略
+}
+test({
+  foo: 123,
+  bar: "bar",
+});
+test({
+  baz: true,
+});
+
+// エラー例
+// test({});
+
+//  4-6
+// -----------------------------------------------
+
+type Page =
+  | {
+      page: "top";
+    }
+  | {
+      page: "mypage";
+      userName: string;
+    }
+  | {
+      page: "ranking";
+      articles: string[];
+    };
+
+type _PageGenerators = {
+  top: (arg: Pick<Page["page"], Exclude<keyof Page["page"], "page">>) => string;
+  mypage: (arg: { userName: string }) => string;
+  ranking: (arg: { articles: string[] }) => string;
+};
+
+type PageGenerators = {
+  [P in Page["page"]]: (page: Extract<Page, { page: P }>) => string;
+};
+
+const pageGenerators: PageGenerators = {
+  top: () => "<p>top page</p>",
+  mypage: ({ userName }) => `<p>Hello, ${userName}!</p>`,
+  ranking: ({ articles }) =>
+    `<h1>ranking</h1>
+        <ul>
+          ${articles.map(name => `<li>${name}</li>`).join("")}
+        </ul>`,
+};
+const renderPage = (page: Page) => pageGenerators[page.page](page as any);
